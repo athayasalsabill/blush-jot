@@ -80,10 +80,15 @@
   --blush-deep: oklch(0.78 0.11 6);
   --bone: oklch(0.985 0.008 90);
   --ink: oklch(0.28 0.015 40);
+  --sage: oklch(0.91 0.035 150);
+  --sky-pastel: oklch(0.91 0.04 230);
+  --butter: oklch(0.94 0.055 95);
+  --lilac: oklch(0.9 0.045 305);
   --background: oklch(0.975 0.012 40);
   --foreground: oklch(0.28 0.015 40);
   --card: oklch(0.985 0.008 90);
   --card-foreground: oklch(0.28 0.015 40);
+
   --popover: oklch(0.985 0.008 90);
   --popover-foreground: oklch(0.28 0.015 40);
   --primary: oklch(0.78 0.11 6);
