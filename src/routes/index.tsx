@@ -10,13 +10,13 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Blush Diary — Diari teks pribadi" },
+      { title: "Athaya's Diary — Diari teks pribadi" },
       {
         name: "description",
         content:
           "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi.",
       },
-      { property: "og:title", content: "Blush Diary — Diari teks pribadi" },
+      { property: "og:title", content: "Athaya's Diary — Diari teks pribadi" },
       {
         property: "og:description",
         content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi.",
@@ -46,7 +46,7 @@ function Gate() {
   return (
     <main className="texture-stripes flex min-h-screen items-center justify-center px-6">
       <div className="paper-shadow fade-up w-full max-w-sm rounded-2xl bg-card px-7 py-12 text-center">
-        <h1 className="font-serif text-4xl tracking-tight text-foreground">Blush Diary</h1>
+        <h1 className="font-serif text-4xl tracking-tight text-foreground">Athaya's Diary</h1>
         <p className="mt-2 font-serif text-sm italic text-muted-foreground">
           hanya untuk matamu sendiri
         </p>
