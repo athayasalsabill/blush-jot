@@ -46,3 +46,41 @@ export const persistEntry = createServerFn({ method: "POST" })
     await requireUnlocked();
     return saveEntry(data);
   });
+
+export const removeEntry = createServerFn({ method: "POST" })
+  .inputValidator((data: { folder: string; slug: string }) => data)
+  .handler(async ({ data }) => {
+    await requireUnlocked();
+    const { deleteEntry } = await import("./github.server");
+    return deleteEntry(data.folder, data.slug);
+  });
+
+export const fetchFolders = createServerFn({ method: "GET" }).handler(async () => {
+  await requireUnlocked();
+  const { ensureFolders } = await import("./github.server");
+  const { DEFAULT_FOLDERS } = await import("./folders");
+  const folders = await ensureFolders(DEFAULT_FOLDERS);
+  return { folders };
+});
+
+export const createFolder = createServerFn({ method: "POST" })
+  .inputValidator((data: { label: string; theme: string }) => data)
+  .handler(async ({ data }) => {
+    await requireUnlocked();
+    const { addFolder, ensureFolders } = await import("./github.server");
+    const { DEFAULT_FOLDERS, slugify } = await import("./folders");
+    await ensureFolders(DEFAULT_FOLDERS);
+    const slug = slugify(data.label);
+    await addFolder({ slug, label: data.label.trim(), theme: data.theme });
+    return { ok: true as const, slug };
+  });
+
+export const deleteFolder = createServerFn({ method: "POST" })
+  .inputValidator((data: { slug: string }) => data)
+  .handler(async ({ data }) => {
+    await requireUnlocked();
+    const { removeFolder, ensureFolders } = await import("./github.server");
+    const { DEFAULT_FOLDERS } = await import("./folders");
+    await ensureFolders(DEFAULT_FOLDERS);
+    return removeFolder(data.slug);
+  });
