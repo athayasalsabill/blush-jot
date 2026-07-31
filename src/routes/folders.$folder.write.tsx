@@ -7,7 +7,7 @@ import { folderLabel, slugify } from "@/lib/folders";
 
 export const Route = createFileRoute("/folders/$folder/write")({
   validateSearch: (search: Record<string, unknown>) => ({
-    slug: typeof search.slug === "string" ? search.slug : "",
+    slug: typeof search['slug'] === "string" ? (search['slug'] as string) : "",
   }),
   beforeLoad: async () => {
     const { unlocked } = await isUnlocked();
