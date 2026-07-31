@@ -73,11 +73,11 @@ function parseEntry(raw: string): { title: string; date: string; body: string } 
   let date = "";
   let bodyStart = 0;
   if (lines[0]?.startsWith("# ")) {
-    title = lines[0].slice(2).trim();
+    title = lines[0]!.slice(2).trim();
     bodyStart = 1;
   }
   if (lines[bodyStart]?.startsWith("date: ")) {
-    date = lines[bodyStart].slice(6).trim();
+    date = lines[bodyStart]!.slice(6).trim();
     bodyStart += 1;
   }
   return { title, date, body: lines.slice(bodyStart).join("\n").replace(/^\n+/, "") };
