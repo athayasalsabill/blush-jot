@@ -1,8 +1,8 @@
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/github";
 
 function headers() {
-  const lovableKey = process.env.LOVABLE_API_KEY;
-  const githubKey = process.env.GITHUB_API_KEY;
+  const lovableKey = process.env['LOVABLE_API_KEY'];
+  const githubKey = process.env['GITHUB_API_KEY'];
   if (!lovableKey) throw new Error("LOVABLE_API_KEY is not configured");
   if (!githubKey) throw new Error("GITHUB_API_KEY is not configured");
   return {
@@ -35,7 +35,7 @@ let cachedRepo: { owner: string; repo: string } | null = null;
 
 export async function ensureRepo(): Promise<{ owner: string; repo: string }> {
   if (cachedRepo) return cachedRepo;
-  const repo = process.env.GITHUB_REPO || "blush-diary";
+  const repo = process.env['GITHUB_REPO'] || "blush-diary";
 
   const meRes = await gh("user");
   if (!meRes.ok) {
