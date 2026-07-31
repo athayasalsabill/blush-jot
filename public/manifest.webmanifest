@@ -1,0 +1,12 @@
+{
+  "name": "Blush Diary",
+  "short_name": "Blush",
+  "description": "Diari teks minimalis pink pastel",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#faf5f2",
+  "theme_color": "#f4c9d5",
+  "icons": [
+    { "src": "/favicon.ico", "sizes": "48x48", "type": "image/x-icon" }
+  ]
+}
