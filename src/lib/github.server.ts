@@ -82,11 +82,8 @@ export async function ensureRepo(): Promise<{ owner: string; repo: string }> {
   }
   cachedRepo = { owner: pick.owner.login, repo: pick.name };
   return cachedRepo;
-
-
-  cachedRepo = { owner, repo };
-  return cachedRepo;
 }
+
 
 export type EntryFile = { slug: string; title: string; date: string; excerpt: string };
 
