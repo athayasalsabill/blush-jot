@@ -1,5 +1,5 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { fetchEntry, isUnlocked, persistEntry } from "@/lib/diary.functions";
@@ -37,6 +37,7 @@ function Writer() {
   const router = useRouter();
   const load = useServerFn(fetchEntry);
   const save = useServerFn(persistEntry);
+  const queryClient = useQueryClient();
 
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
@@ -69,6 +70,7 @@ function Writer() {
       await save({
         data: { folder, slug: slug || slugify(title), title: title.trim(), date, body },
       });
+      await queryClient.invalidateQueries({ queryKey: ["entries", folder] });
       setStatus("saved");
       setMessage("Tersimpan di GitHub pribadi.");
       await router.navigate({ to: "/folders/$folder", params: { folder } });
