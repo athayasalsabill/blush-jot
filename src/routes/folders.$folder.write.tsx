@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { fetchEntry, isUnlocked, persistEntry } from "@/lib/diary.functions";
-import { folderLabel, slugify } from "@/lib/folders";
+import { prettifySlug, slugify } from "@/lib/folders";
 
 export const Route = createFileRoute("/folders/$folder/write")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -15,9 +15,9 @@ export const Route = createFileRoute("/folders/$folder/write")({
   },
   head: () => ({
     meta: [
-      { title: "Menulis — Blush Diary" },
+      { title: "Menulis — Athaya's Diary" },
       { name: "description", content: "Editor teks serif minimalis untuk entri diari kamu." },
-      { property: "og:title", content: "Menulis — Blush Diary" },
+      { property: "og:title", content: "Menulis — Athaya's Diary" },
       {
         property: "og:description",
         content: "Editor teks serif minimalis untuk entri diari kamu.",
@@ -89,7 +89,7 @@ function Writer() {
             params={{ folder }}
             className="text-xs tracking-widest uppercase text-muted-foreground transition-colors hover:text-primary"
           >
-            ← {folderLabel(folder)}
+            ← {prettifySlug(folder)}
           </Link>
           <button
             onClick={onSave}

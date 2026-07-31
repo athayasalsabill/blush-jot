@@ -57,7 +57,7 @@ export async function ensureRepo(): Promise<{ owner: string; repo: string }> {
       name: repo,
       private: true,
       auto_init: true,
-      description: "Blush Diary entries",
+      description: "Athaya's Diary entries",
     }),
   });
   if (created.ok) {
@@ -162,4 +162,88 @@ export async function saveEntry(input: {
   });
   if (!res.ok) throw new Error(`Save failed [${res.status}]: ${await res.text()}`);
   return { ok: true as const };
+}
+
+export async function deleteEntry(folder: string, slug: string) {
+  const { owner, repo } = await ensureRepo();
+  const existing = await getEntry(folder, slug);
+  if (!existing) return { ok: true as const };
+  const path = `${encodeURIComponent(folder)}/${encodeURIComponent(slug)}.md`;
+  const res = await gh(`repos/${owner}/${repo}/contents/${path}`, {
+    method: "DELETE",
+    body: JSON.stringify({ message: `diary: hapus ${slug}`, sha: existing.sha }),
+  });
+  if (!res.ok) throw new Error(`Delete failed [${res.status}]: ${await res.text()}`);
+  return { ok: true as const };
+}
+
+const FOLDERS_PATH = "folders.json";
+
+type StoredFolder = { slug: string; label: string; theme: string };
+
+async function readFoldersFile(): Promise<{ folders: StoredFolder[]; sha?: string } | null> {
+  const { owner, repo } = await ensureRepo();
+  const res = await gh(`repos/${owner}/${repo}/contents/${FOLDERS_PATH}`);
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(`Folder read failed [${res.status}]: ${await res.text()}`);
+  const data = (await res.json()) as { content: string; sha: string };
+  try {
+    const parsed = JSON.parse(decodeBase64(data.content)) as StoredFolder[];
+    return { folders: Array.isArray(parsed) ? parsed : [], sha: data.sha };
+  } catch {
+    return { folders: [], sha: data.sha };
+  }
+}
+
+async function writeFoldersFile(folders: StoredFolder[], sha?: string) {
+  const { owner, repo } = await ensureRepo();
+  const res = await gh(`repos/${owner}/${repo}/contents/${FOLDERS_PATH}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      message: "diary: perbarui map",
+      content: encodeBase64(JSON.stringify(folders, null, 2)),
+      ...(sha ? { sha } : {}),
+    }),
+  });
+  if (!res.ok) throw new Error(`Folder save failed [${res.status}]: ${await res.text()}`);
+}
+
+export async function listFolders(): Promise<StoredFolder[]> {
+  const file = await readFoldersFile();
+  if (file) return file.folders;
+  return [];
+}
+
+export async function addFolder(folder: StoredFolder) {
+  const file = await readFoldersFile();
+  const current = file?.folders ?? [];
+  if (current.some((f) => f.slug === folder.slug)) return { ok: true as const };
+  await writeFoldersFile([...current, folder], file?.sha);
+  return { ok: true as const };
+}
+
+export async function removeFolder(slug: string) {
+  const { owner, repo } = await ensureRepo();
+  const listRes = await gh(`repos/${owner}/${repo}/contents/${encodeURIComponent(slug)}`);
+  if (listRes.ok) {
+    const files = (await listRes.json()) as Array<{ name: string; path: string; sha: string; type: string }>;
+    for (const f of files) {
+      if (f.type !== "file") continue;
+      await gh(`repos/${owner}/${repo}/contents/${f.path.split("/").map(encodeURIComponent).join("/")}`, {
+        method: "DELETE",
+        body: JSON.stringify({ message: `diary: hapus map ${slug}`, sha: f.sha }),
+      });
+    }
+  }
+  const file = await readFoldersFile();
+  const current = file?.folders ?? [];
+  await writeFoldersFile(current.filter((f) => f.slug !== slug), file?.sha);
+  return { ok: true as const };
+}
+
+export async function ensureFolders(defaults: StoredFolder[]): Promise<StoredFolder[]> {
+  const file = await readFoldersFile();
+  if (file) return file.folders;
+  await writeFoldersFile(defaults);
+  return defaults;
 }
