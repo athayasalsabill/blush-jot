@@ -44,22 +44,45 @@ export async function ensureRepo(): Promise<{ owner: string; repo: string }> {
   const owner = ((await meRes.json()) as { login: string }).login;
 
   const repoRes = await gh(`repos/${owner}/${repo}`);
-  if (repoRes.status === 404) {
-    const created = await gh("user/repos", {
-      method: "POST",
-      body: JSON.stringify({
-        name: repo,
-        private: true,
-        auto_init: true,
-        description: "Blush Diary entries",
-      }),
-    });
-    if (!created.ok) {
-      throw new Error(`Could not create repo [${created.status}]: ${await created.text()}`);
-    }
-  } else if (!repoRes.ok) {
-    throw new Error(`Repo lookup failed [${repoRes.status}]: ${await repoRes.text()}`);
+  if (repoRes.ok) {
+    cachedRepo = { owner, repo };
+    return cachedRepo;
   }
+
+  // Repo not reachable: try to create it, and otherwise fall back to an
+  // accessible private repository so entries still have a home.
+  const created = await gh("user/repos", {
+    method: "POST",
+    body: JSON.stringify({
+      name: repo,
+      private: true,
+      auto_init: true,
+      description: "Blush Diary entries",
+    }),
+  });
+  if (created.ok) {
+    cachedRepo = { owner, repo };
+    return cachedRepo;
+  }
+
+  const listRes = await gh("user/repos?per_page=100&sort=updated&affiliation=owner");
+  if (!listRes.ok) {
+    throw new Error(`Repo lookup failed [${listRes.status}]: ${await listRes.text()}`);
+  }
+  const repos = (await listRes.json()) as Array<{
+    name: string;
+    private: boolean;
+    owner: { login: string };
+  }>;
+  const pick = repos.find((r) => r.private) ?? repos[0];
+  if (!pick) {
+    throw new Error(
+      "Tidak ada repositori GitHub yang bisa diakses. Buat repositori privat lalu simpan namanya.",
+    );
+  }
+  cachedRepo = { owner: pick.owner.login, repo: pick.name };
+  return cachedRepo;
+
 
   cachedRepo = { owner, repo };
   return cachedRepo;
