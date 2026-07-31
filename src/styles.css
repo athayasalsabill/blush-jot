@@ -63,6 +63,11 @@
   --color-blush-deep: var(--blush-deep);
   --color-bone: var(--bone);
   --color-ink: var(--ink);
+  --color-sage: var(--sage);
+  --color-sky-pastel: var(--sky-pastel);
+  --color-butter: var(--butter);
+  --color-lilac: var(--lilac);
+
   --font-serif: var(--font-diary);
   --font-sans: var(--font-ui);
 }
