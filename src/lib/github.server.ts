@@ -57,7 +57,7 @@ export async function ensureRepo(): Promise<{ owner: string; repo: string }> {
       name: repo,
       private: true,
       auto_init: true,
-      description: "Blush Diary entries",
+      description: "Athaya's Diary entries",
     }),
   });
   if (created.ok) {
