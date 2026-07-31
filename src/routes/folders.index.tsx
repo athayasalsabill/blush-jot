@@ -4,7 +4,7 @@ import { isUnlocked, lockSite } from "@/lib/diary.functions";
 import { FOLDERS } from "@/lib/folders";
 import { redirect } from "@tanstack/react-router";
 
-export const Route = createFileRoute("/folders")({
+export const Route = createFileRoute("/folders/")({
   beforeLoad: async () => {
     const { unlocked } = await isUnlocked();
     if (!unlocked) throw redirect({ to: "/" });
