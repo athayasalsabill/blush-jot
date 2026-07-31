@@ -19,7 +19,7 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: "Blush Diary — Diari teks pribadi" },
       {
         property: "og:description",
-        content: "Diari teks minimalis berwarna pink pastel, tersimpan aman di GitHub pribadi.",
+        content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi.",
       },
     ],
   }),
