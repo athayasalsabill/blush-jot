@@ -240,3 +240,10 @@ export async function removeFolder(slug: string) {
   await writeFoldersFile(current.filter((f) => f.slug !== slug), file?.sha);
   return { ok: true as const };
 }
+
+export async function ensureFolders(defaults: StoredFolder[]): Promise<StoredFolder[]> {
+  const file = await readFoldersFile();
+  if (file) return file.folders;
+  await writeFoldersFile(defaults);
+  return defaults;
+}
