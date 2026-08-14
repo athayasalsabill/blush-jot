@@ -211,3 +211,57 @@
   from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Fabric & paper textures for folder dividers */
+@utility texture-denim {
+  background-color: oklch(0.62 0.075 250);
+  background-image:
+    repeating-linear-gradient(45deg, oklch(1 0 0 / 8%) 0 1px, transparent 1px 3px),
+    repeating-linear-gradient(-45deg, oklch(0.25 0.05 260 / 18%) 0 1px, transparent 1px 3px);
+}
+
+@utility texture-velvet {
+  background-color: oklch(0.55 0.11 350);
+  background-image:
+    radial-gradient(circle at 30% 20%, oklch(1 0 0 / 16%), transparent 55%),
+    repeating-linear-gradient(90deg, oklch(0.3 0.08 350 / 22%) 0 2px, transparent 2px 5px);
+}
+
+@utility texture-linen {
+  background-color: oklch(0.94 0.018 85);
+  background-image:
+    repeating-linear-gradient(0deg, oklch(0.75 0.03 80 / 30%) 0 1px, transparent 1px 4px),
+    repeating-linear-gradient(90deg, oklch(0.75 0.03 80 / 30%) 0 1px, transparent 1px 4px);
+}
+
+@utility texture-corduroy {
+  background-color: oklch(0.78 0.07 60);
+  background-image: repeating-linear-gradient(
+    90deg,
+    oklch(0.55 0.07 55 / 35%) 0 2px,
+    oklch(1 0 0 / 12%) 2px 4px,
+    transparent 4px 9px
+  );
+}
+
+@utility texture-kraft {
+  background-color: oklch(0.83 0.05 75);
+  background-image:
+    radial-gradient(oklch(0.6 0.05 70 / 25%) 0.8px, transparent 1px),
+    radial-gradient(oklch(0.98 0.02 90 / 35%) 0.8px, transparent 1px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 4px 6px;
+}
+
+@utility texture-polka {
+  background-color: oklch(0.96 0.012 90);
+  background-image: radial-gradient(oklch(0.65 0.09 350) 2.4px, transparent 2.6px);
+  background-size: 18px 18px;
+}
+
+/* Opening screen: broken white with black polka dots */
+@utility texture-polka-mono {
+  background-color: oklch(0.965 0.006 90);
+  background-image: radial-gradient(oklch(0.18 0 0) 2.6px, transparent 2.8px);
+  background-size: 22px 22px;
+}
