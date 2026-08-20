@@ -1,7 +1,7 @@
 {
   "name": "Athaya's Diary",
   "short_name": "Athaya",
-  "description": "Diari teks minimalis pink pastel",
+  "description": "A minimal pastel-pink text diary",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#faf5f2",
