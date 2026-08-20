@@ -84,3 +84,49 @@ export const deleteFolder = createServerFn({ method: "POST" })
     await ensureFolders(DEFAULT_FOLDERS);
     return removeFolder(data.slug);
   });
+
+export const exportAll = createServerFn({ method: "GET" }).handler(async () => {
+  await requireUnlocked();
+  const { ensureFolders } = await import("./github.server");
+  const { DEFAULT_FOLDERS } = await import("./folders");
+  const folders = await ensureFolders(DEFAULT_FOLDERS);
+  const entries: {
+    folder: string;
+    slug: string;
+    title: string;
+    date: string;
+    body: string;
+  }[] = [];
+  for (const folder of folders) {
+    const list = await listEntries(folder.slug);
+    for (const item of list) {
+      const full = await getEntry(folder.slug, item.slug);
+      if (full)
+        entries.push({
+          folder: folder.slug,
+          slug: item.slug,
+          title: full.title,
+          date: full.date,
+          body: full.body,
+        });
+    }
+  }
+  return { version: 1 as const, exportedAt: new Date().toISOString(), folders, entries };
+});
+
+export const importAll = createServerFn({ method: "POST" })
+  .inputValidator(
+    (data: {
+      folders: { slug: string; label: string; theme: string }[];
+      entries: { folder: string; slug: string; title: string; date: string; body: string }[];
+    }) => data,
+  )
+  .handler(async ({ data }) => {
+    await requireUnlocked();
+    const { addFolder, ensureFolders } = await import("./github.server");
+    const { DEFAULT_FOLDERS } = await import("./folders");
+    await ensureFolders(DEFAULT_FOLDERS);
+    for (const folder of data.folders) await addFolder(folder);
+    for (const entry of data.entries) await saveEntry(entry);
+    return { ok: true as const, count: data.entries.length };
+  });
