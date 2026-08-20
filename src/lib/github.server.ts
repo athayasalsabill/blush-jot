@@ -247,3 +247,14 @@ export async function ensureFolders(defaults: StoredFolder[]): Promise<StoredFol
   await writeFoldersFile(defaults);
   return defaults;
 }
+
+export async function reorderFolders(slugs: string[]) {
+  const file = await readFoldersFile();
+  const current = file?.folders ?? [];
+  const ordered = slugs
+    .map((slug) => current.find((f) => f.slug === slug))
+    .filter((f): f is StoredFolder => Boolean(f));
+  const rest = current.filter((f) => !slugs.includes(f.slug));
+  await writeFoldersFile([...ordered, ...rest], file?.sha);
+  return { ok: true as const };
+}
