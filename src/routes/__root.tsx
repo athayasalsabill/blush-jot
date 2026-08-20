@@ -11,6 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { registerServiceWorker } from "../lib/register-sw";
 
 function NotFoundComponent() {
   return (
@@ -80,15 +81,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         name: "viewport",
         content: "width=device-width, initial-scale=1, viewport-fit=cover",
       },
-      { title: "Athaya's Diary — Diari teks pribadi" },
-      { name: "description", content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi." },
+      { title: "Athaya's Diary — A private text diary" },
+      { name: "description", content: "A minimal text-only diary. Enter your password to read and write private notes." },
       { name: "theme-color", content: "#f4c9d5" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { property: "og:title", content: "Athaya's Diary — Diari teks pribadi" },
-      { name: "twitter:title", content: "Athaya's Diary — Diari teks pribadi" },
-      { property: "og:description", content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi." },
-      { name: "twitter:description", content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi." },
+      { property: "og:title", content: "Athaya's Diary — A private text diary" },
+      { name: "twitter:title", content: "Athaya's Diary — A private text diary" },
+      { property: "og:description", content: "A minimal text-only diary. Enter your password to read and write private notes." },
+      { name: "twitter:description", content: "A minimal text-only diary. Enter your password to read and write private notes." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/73bc7aac-e330-453b-9546-46800072fce2" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/attachments/og-images/73bc7aac-e330-453b-9546-46800072fce2" },
     ],
@@ -126,6 +127,10 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  useEffect(() => {
+    registerServiceWorker();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

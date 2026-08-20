@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { fetchEntry, isUnlocked, persistEntry } from "@/lib/diary.functions";
 import { prettifySlug, slugify } from "@/lib/folders";
+import { withCache } from "@/lib/local-store";
 
 export const Route = createFileRoute("/folders/$folder/write")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -15,12 +16,12 @@ export const Route = createFileRoute("/folders/$folder/write")({
   },
   head: () => ({
     meta: [
-      { title: "Menulis — Athaya's Diary" },
-      { name: "description", content: "Editor teks serif minimalis untuk entri diari kamu." },
-      { property: "og:title", content: "Menulis — Athaya's Diary" },
+      { title: "Writing — Athaya's Diary" },
+      { name: "description", content: "A minimal serif editor for your diary entries." },
+      { property: "og:title", content: "Writing — Athaya's Diary" },
       {
         property: "og:description",
-        content: "Editor teks serif minimalis untuk entri diari kamu.",
+        content: "A minimal serif editor for your diary entries.",
       },
     ],
   }),
@@ -47,7 +48,7 @@ function Writer() {
 
   const { data } = useQuery({
     queryKey: ["entry", folder, slug],
-    queryFn: () => load({ data: { folder, slug } }),
+    queryFn: () => withCache(`entry:${folder}:${slug}`, () => load({ data: { folder, slug } })),
     enabled: Boolean(slug),
   });
 
@@ -62,7 +63,7 @@ function Writer() {
   async function onSave() {
     if (!title.trim()) {
       setStatus("error");
-      setMessage("Beri judul dulu ya.");
+      setMessage("Please add a title first.");
       return;
     }
     setStatus("saving");
@@ -72,7 +73,7 @@ function Writer() {
       });
       await queryClient.invalidateQueries({ queryKey: ["entries", folder] });
       setStatus("saved");
-      setMessage("Tersimpan di GitHub pribadi.");
+      setMessage("Saved to your private GitHub.");
       await router.navigate({ to: "/folders/$folder", params: { folder } });
     } catch (e) {
       setStatus("error");
@@ -97,7 +98,7 @@ function Writer() {
             className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-[11px] tracking-widest uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
             <LockGh />
-            {status === "saving" ? "menyimpan…" : "Simpan"}
+            {status === "saving" ? "saving…" : "Save"}
           </button>
         </div>
 
@@ -105,7 +106,7 @@ function Writer() {
           <input
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="Judul diari"
+            placeholder="Entry title"
             className="w-full bg-transparent font-serif text-2xl leading-snug text-foreground outline-none placeholder:text-muted-foreground"
           />
           <input
@@ -122,18 +123,18 @@ function Writer() {
               if (Array.from(e.clipboardData.items).some((i) => i.type.startsWith("image/"))) {
                 e.preventDefault();
                 setStatus("error");
-                setMessage("Hanya teks yang diizinkan — gambar tidak disimpan.");
+                setMessage("Text only — images are never stored.");
               }
             }}
             onDrop={(e) => e.preventDefault()}
             rows={18}
-            placeholder="Tulis hari ini…"
+            placeholder="Write today…"
             className="mt-4 w-full resize-none bg-transparent font-serif text-base leading-8 text-foreground outline-none placeholder:text-muted-foreground"
           />
         </section>
 
         <p className="mt-3 px-1 text-center font-serif text-xs italic text-muted-foreground">
-          {message || "Hanya teks — tanpa gambar, hemat memori."}
+          {message || "Text only — no images, light on storage."}
         </p>
       </div>
     </main>

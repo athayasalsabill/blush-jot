@@ -10,16 +10,16 @@ export const Route = createFileRoute("/")({
   },
   head: () => ({
     meta: [
-      { title: "Athaya's Diary — Diari teks pribadi" },
+      { title: "Athaya's Diary — A private text diary" },
       {
         name: "description",
         content:
-          "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi.",
+          "A minimal text-only diary. Enter your password to read and write private notes.",
       },
-      { property: "og:title", content: "Athaya's Diary — Diari teks pribadi" },
+      { property: "og:title", content: "Athaya's Diary — A private text diary" },
       {
         property: "og:description",
-        content: "Diari teks minimalis berwarna pink pastel. Masuk dengan kata sandi untuk membaca dan menulis catatan pribadi.",
+        content: "A minimal text-only diary. Enter your password to read and write private notes.",
       },
     ],
   }),
@@ -44,11 +44,11 @@ function Gate() {
   }
 
   return (
-    <main className="texture-stripes flex min-h-screen items-center justify-center px-6">
+    <main className="texture-polka-mono flex min-h-screen items-center justify-center px-6">
       <div className="paper-shadow fade-up w-full max-w-sm rounded-2xl bg-card px-7 py-12 text-center">
         <h1 className="font-serif text-4xl tracking-tight text-foreground">Athaya's Diary</h1>
         <p className="mt-2 font-serif text-sm italic text-muted-foreground">
-          hanya untuk matamu sendiri
+          for your eyes only
         </p>
 
         <form onSubmit={onSubmit} className="mt-10 space-y-4">
@@ -56,7 +56,7 @@ function Gate() {
             name="password"
             type="password"
             autoComplete="current-password"
-            placeholder="kata sandi"
+            placeholder="password"
             className="w-full rounded-full border border-border bg-background px-5 py-3 text-center font-serif text-base text-foreground outline-none transition-colors placeholder:text-muted-foreground focus:border-primary"
           />
           <button
@@ -64,10 +64,10 @@ function Gate() {
             disabled={busy}
             className="w-full rounded-full bg-primary px-5 py-3 text-sm tracking-widest uppercase text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-50"
           >
-            {busy ? "membuka…" : "Buka"}
+            {busy ? "unlocking…" : "Unlock"}
           </button>
           {error && (
-            <p className="font-serif text-sm text-destructive">Kata sandi tidak sesuai.</p>
+            <p className="font-serif text-sm text-destructive">That password doesn’t match.</p>
           )}
         </form>
       </div>
