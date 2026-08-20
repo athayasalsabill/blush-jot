@@ -130,3 +130,11 @@ export const importAll = createServerFn({ method: "POST" })
     for (const entry of data.entries) await saveEntry(entry);
     return { ok: true as const, count: data.entries.length };
   });
+
+export const saveFolderOrder = createServerFn({ method: "POST" })
+  .inputValidator((data: { slugs: string[] }) => data)
+  .handler(async ({ data }) => {
+    await requireUnlocked();
+    const { reorderFolders } = await import("./github.server");
+    return reorderFolders(data.slugs);
+  });
