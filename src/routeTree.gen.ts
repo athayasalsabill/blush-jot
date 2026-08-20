@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as BackupRouteImport } from './routes/backup'
 import { Route as FoldersIndexRouteImport } from './routes/folders.index'
 import { Route as FoldersFolderIndexRouteImport } from './routes/folders.$folder.index'
 import { Route as FoldersFolderWriteRouteImport } from './routes/folders.$folder.write'
@@ -17,6 +18,11 @@ import { Route as FoldersFolderWriteRouteImport } from './routes/folders.$folder
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BackupRoute = BackupRouteImport.update({
+  id: '/backup',
+  path: '/backup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FoldersIndexRoute = FoldersIndexRouteImport.update({
@@ -37,12 +43,14 @@ const FoldersFolderWriteRoute = FoldersFolderWriteRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/backup': typeof BackupRoute
   '/folders/': typeof FoldersIndexRoute
   '/folders/$folder/write': typeof FoldersFolderWriteRoute
   '/folders/$folder/': typeof FoldersFolderIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/backup': typeof BackupRoute
   '/folders': typeof FoldersIndexRoute
   '/folders/$folder/write': typeof FoldersFolderWriteRoute
   '/folders/$folder': typeof FoldersFolderIndexRoute
@@ -50,18 +58,26 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/backup': typeof BackupRoute
   '/folders/': typeof FoldersIndexRoute
   '/folders/$folder/write': typeof FoldersFolderWriteRoute
   '/folders/$folder/': typeof FoldersFolderIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/folders/' | '/folders/$folder/write' | '/folders/$folder/'
+  fullPaths:
+    | '/'
+    | '/backup'
+    | '/folders/'
+    | '/folders/$folder/write'
+    | '/folders/$folder/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/folders' | '/folders/$folder/write' | '/folders/$folder'
+  to:
+    '/' | '/backup' | '/folders' | '/folders/$folder/write' | '/folders/$folder'
   id:
     | '__root__'
     | '/'
+    | '/backup'
     | '/folders/'
     | '/folders/$folder/write'
     | '/folders/$folder/'
@@ -69,6 +85,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  BackupRoute: typeof BackupRoute
   FoldersIndexRoute: typeof FoldersIndexRoute
   FoldersFolderWriteRoute: typeof FoldersFolderWriteRoute
   FoldersFolderIndexRoute: typeof FoldersFolderIndexRoute
@@ -81,6 +98,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/backup': {
+      id: '/backup'
+      path: '/backup'
+      fullPath: '/backup'
+      preLoaderRoute: typeof BackupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/folders/': {
@@ -109,6 +133,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  BackupRoute: BackupRoute,
   FoldersIndexRoute: FoldersIndexRoute,
   FoldersFolderWriteRoute: FoldersFolderWriteRoute,
   FoldersFolderIndexRoute: FoldersFolderIndexRoute,
