@@ -1,10 +1,11 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchEntry, isUnlocked, persistEntry } from "@/lib/diary.functions";
 import { prettifySlug, slugify } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { clearDraft, readDraft, withCache, writeDraft } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/$folder/write")({
   validateSearch: (search: Record<string, unknown>) => ({
