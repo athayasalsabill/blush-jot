@@ -1,10 +1,18 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { createFolder, deleteFolder, fetchFolders, isUnlocked, lockSite } from "@/lib/diary.functions";
-import { THEMES, themeTab, type FolderTheme } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { useEffect, useRef, useState } from "react";
+import {
+  createFolder,
+  deleteFolder,
+  fetchFolders,
+  isUnlocked,
+  lockSite,
+  saveFolderOrder,
+} from "@/lib/diary.functions";
+import { THEMES, themeTab, type Folder, type FolderTheme } from "@/lib/folders";
+import { cacheWrite, withCache } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/")({
   beforeLoad: async () => {
@@ -42,6 +50,111 @@ function Folders() {
     queryKey: ["folders"],
     queryFn: () => withCache("folders", () => load()),
   });
+
+  const saveOrder = useServerFn(saveFolderOrder);
+  const [order, setOrder] = useState<Folder[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const draggedRef = useRef(false);
+  const holdTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startY = useRef(0);
+  const dragIndexRef = useRef<number | null>(null);
+  const orderRef = useRef<Folder[]>([]);
+
+  useEffect(() => {
+    if (data?.folders) {
+      setOrder(data.folders as Folder[]);
+      orderRef.current = data.folders as Folder[];
+    }
+  }, [data]);
+
+  useEffect(() => {
+    orderRef.current = order;
+  }, [order]);
+
+  // While dragging on touch, stop the page from scrolling underneath.
+  useEffect(() => {
+    if (dragIndex === null) return;
+    const block = (e: TouchEvent) => e.preventDefault();
+    document.addEventListener("touchmove", block, { passive: false });
+    return () => document.removeEventListener("touchmove", block);
+  }, [dragIndex]);
+
+  function moveItem(from: number, to: number) {
+    setOrder((prev) => {
+      const next = [...prev];
+      const [item] = next.splice(from, 1);
+      if (item) next.splice(to, 0, item);
+      return next;
+    });
+  }
+
+  function onPointerDown(e: React.PointerEvent<HTMLDivElement>, index: number) {
+    if ((e.target as HTMLElement).closest("button")) return;
+    startY.current = e.clientY;
+    draggedRef.current = false;
+    const pointerId = e.pointerId;
+    const el = e.currentTarget;
+    holdTimer.current = setTimeout(() => {
+      dragIndexRef.current = index;
+      setDragIndex(index);
+      draggedRef.current = true;
+      try {
+        el.setPointerCapture(pointerId);
+      } catch {
+        /* capture unavailable */
+      }
+    }, 220);
+
+    const onMove = (ev: PointerEvent) => {
+      const current = dragIndexRef.current;
+      if (current === null) {
+        if (Math.abs(ev.clientY - startY.current) > 8 && holdTimer.current) {
+          clearTimeout(holdTimer.current);
+          holdTimer.current = null;
+        }
+        return;
+      }
+      const targets = itemRefs.current;
+      for (let i = 0; i < targets.length; i += 1) {
+        if (i === current) continue;
+        const rect = targets[i]?.getBoundingClientRect();
+        if (!rect) continue;
+        const middle = rect.top + rect.height / 2;
+        if ((i < current && ev.clientY < middle) || (i > current && ev.clientY > middle)) {
+          moveItem(current, i);
+          dragIndexRef.current = i;
+          setDragIndex(i);
+          break;
+        }
+      }
+    };
+
+    const onUp = async () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+      if (holdTimer.current) clearTimeout(holdTimer.current);
+      holdTimer.current = null;
+      const wasDragging = dragIndexRef.current !== null;
+      dragIndexRef.current = null;
+      setDragIndex(null);
+      if (!wasDragging) return;
+      setTimeout(() => (draggedRef.current = false), 300);
+      try {
+        await saveOrder({ data: { slugs: orderRef.current.map((f) => f.slug) } });
+        queryClient.setQueryData(["folders"], { folders: orderRef.current });
+        cacheWrite("folders", { folders: orderRef.current });
+      } catch {
+        /* keep the local order; it will resync on reload */
+      }
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+  }
+
 
   async function onAdd() {
     if (!label.trim()) return;
@@ -103,11 +216,22 @@ function Folders() {
             Couldn't load folders: {(error as Error).message}
           </p>
         )}
-        {data?.folders.map((folder, i) => (
+        {order.map((folder, i) => (
           <div
             key={folder.slug}
-            className="fade-up relative"
-            style={{ animationDelay: `${i * 70}ms`, marginTop: i === 0 ? 0 : "-14px" }}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
+            onPointerDown={(e) => onPointerDown(e, i)}
+            className={`fade-up relative transition-shadow ${
+              dragIndex === i ? "z-20 scale-[1.02] opacity-90" : ""
+            }`}
+            style={{
+              animationDelay: `${i * 70}ms`,
+              marginTop: i === 0 ? 0 : "-14px",
+              touchAction: dragIndex === null ? "auto" : "none",
+              cursor: dragIndex === i ? "grabbing" : undefined,
+            }}
           >
             <div
               className={`${themeTab(folder.theme)} paper-shadow ml-auto w-40 rounded-t-xl px-4 py-2 font-serif text-sm break-words text-foreground`}
@@ -120,7 +244,14 @@ function Folders() {
                 to="/folders/$folder"
                 params={{ folder: folder.slug }}
                 aria-label={`Open ${folder.label}`}
-                className={`${themeTab(folder.theme)} paper-shadow flex min-h-28 items-end rounded-xl rounded-tr-none px-5 py-5 transition-transform duration-300 hover:-translate-y-1`}
+                draggable={false}
+                onClick={(e) => {
+                  if (draggedRef.current) {
+                    e.preventDefault();
+                    draggedRef.current = false;
+                  }
+                }}
+                className={`${themeTab(folder.theme)} paper-shadow flex min-h-28 select-none items-end rounded-xl rounded-tr-none px-5 py-5 transition-transform duration-300 hover:-translate-y-1`}
               >
                 <span className="max-w-[70%] font-serif text-lg leading-snug break-words text-foreground/80">
                   {folder.label}
@@ -137,6 +268,7 @@ function Folders() {
             </div>
           </div>
         ))}
+
 
         {adding ? (
           <div className="paper-shadow mt-6 rounded-xl bg-card px-5 py-5">
