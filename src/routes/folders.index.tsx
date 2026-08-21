@@ -1,10 +1,18 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
-import { createFolder, deleteFolder, fetchFolders, isUnlocked, lockSite } from "@/lib/diary.functions";
-import { THEMES, themeTab, type FolderTheme } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { useEffect, useRef, useState } from "react";
+import {
+  createFolder,
+  deleteFolder,
+  fetchFolders,
+  isUnlocked,
+  lockSite,
+  saveFolderOrder,
+} from "@/lib/diary.functions";
+import { THEMES, themeTab, type Folder, type FolderTheme } from "@/lib/folders";
+import { cacheWrite, withCache } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/")({
   beforeLoad: async () => {
