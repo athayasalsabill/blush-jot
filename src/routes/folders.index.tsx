@@ -103,11 +103,22 @@ function Folders() {
             Couldn't load folders: {(error as Error).message}
           </p>
         )}
-        {data?.folders.map((folder, i) => (
+        {order.map((folder, i) => (
           <div
             key={folder.slug}
-            className="fade-up relative"
-            style={{ animationDelay: `${i * 70}ms`, marginTop: i === 0 ? 0 : "-14px" }}
+            ref={(el) => {
+              itemRefs.current[i] = el;
+            }}
+            onPointerDown={(e) => onPointerDown(e, i)}
+            className={`fade-up relative transition-shadow ${
+              dragIndex === i ? "z-20 scale-[1.02] opacity-90" : ""
+            }`}
+            style={{
+              animationDelay: `${i * 70}ms`,
+              marginTop: i === 0 ? 0 : "-14px",
+              touchAction: dragIndex === null ? "auto" : "none",
+              cursor: dragIndex === i ? "grabbing" : undefined,
+            }}
           >
             <div
               className={`${themeTab(folder.theme)} paper-shadow ml-auto w-40 rounded-t-xl px-4 py-2 font-serif text-sm break-words text-foreground`}
@@ -120,7 +131,14 @@ function Folders() {
                 to="/folders/$folder"
                 params={{ folder: folder.slug }}
                 aria-label={`Open ${folder.label}`}
-                className={`${themeTab(folder.theme)} paper-shadow flex min-h-28 items-end rounded-xl rounded-tr-none px-5 py-5 transition-transform duration-300 hover:-translate-y-1`}
+                draggable={false}
+                onClick={(e) => {
+                  if (draggedRef.current) {
+                    e.preventDefault();
+                    draggedRef.current = false;
+                  }
+                }}
+                className={`${themeTab(folder.theme)} paper-shadow flex min-h-28 select-none items-end rounded-xl rounded-tr-none px-5 py-5 transition-transform duration-300 hover:-translate-y-1`}
               >
                 <span className="max-w-[70%] font-serif text-lg leading-snug break-words text-foreground/80">
                   {folder.label}
@@ -137,6 +155,7 @@ function Folders() {
             </div>
           </div>
         ))}
+
 
         {adding ? (
           <div className="paper-shadow mt-6 rounded-xl bg-card px-5 py-5">
