@@ -1,10 +1,11 @@
 import { createFileRoute, Link, redirect, useRouter } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchEntry, isUnlocked, persistEntry } from "@/lib/diary.functions";
 import { prettifySlug, slugify } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { clearDraft, readDraft, withCache, writeDraft } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/$folder/write")({
   validateSearch: (search: Record<string, unknown>) => ({
@@ -40,11 +41,15 @@ function Writer() {
   const save = useServerFn(persistEntry);
   const queryClient = useQueryClient();
 
+  const draftSlug = slug || "__new";
+
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(today());
   const [body, setBody] = useState("");
   const [status, setStatus] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [message, setMessage] = useState("");
+  const [ready, setReady] = useState(false);
+  const hasDraftRef = useRef(false);
 
   const { data } = useQuery({
     queryKey: ["entry", folder, slug],
@@ -52,13 +57,45 @@ function Writer() {
     enabled: Boolean(slug),
   });
 
+  // Restore a local draft first — it always wins over the stored version.
   useEffect(() => {
+    const draft = readDraft(folder, draftSlug);
+    if (draft) {
+      hasDraftRef.current = true;
+      setTitle(draft.title);
+      setDate(draft.date || today());
+      setBody(draft.body);
+      setMessage("Restored your unsaved draft from this device.");
+    }
+    setReady(true);
+  }, [folder, draftSlug]);
+
+  useEffect(() => {
+    if (!ready || hasDraftRef.current) return;
     if (data?.entry) {
       setTitle(data.entry.title);
       setDate(data.entry.date || today());
       setBody(data.entry.body);
     }
-  }, [data]);
+  }, [data, ready]);
+
+  // Autosave locally while typing so nothing is lost when leaving the page.
+  useEffect(() => {
+    if (!ready) return;
+    if (!title.trim() && !body.trim()) return;
+    const id = setTimeout(() => {
+      writeDraft({ folder, slug: draftSlug, title, date, body });
+      hasDraftRef.current = true;
+      if (status !== "saving") setMessage("Draft saved on this device.");
+    }, 500);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [title, date, body, ready, folder, draftSlug]);
+
+  function saveLocal() {
+    if (!title.trim() && !body.trim()) return;
+    writeDraft({ folder, slug: draftSlug, title, date, body });
+  }
 
   async function onSave() {
     if (!title.trim()) {
@@ -66,18 +103,22 @@ function Writer() {
       setMessage("Please add a title first.");
       return;
     }
+    saveLocal();
     setStatus("saving");
+    setMessage("Saving to GitHub…");
     try {
       await save({
         data: { folder, slug: slug || slugify(title), title: title.trim(), date, body },
       });
+      clearDraft(folder, draftSlug);
+      hasDraftRef.current = false;
       await queryClient.invalidateQueries({ queryKey: ["entries", folder] });
       setStatus("saved");
       setMessage("Saved to your private GitHub.");
       await router.navigate({ to: "/folders/$folder", params: { folder } });
     } catch (e) {
       setStatus("error");
-      setMessage((e as Error).message);
+      setMessage(`Kept on this device — GitHub save failed: ${(e as Error).message}`);
     }
   }
 
@@ -88,6 +129,7 @@ function Writer() {
           <Link
             to="/folders/$folder"
             params={{ folder }}
+            onClick={saveLocal}
             className="text-xs tracking-widest uppercase text-muted-foreground transition-colors hover:text-primary"
           >
             ← {prettifySlug(folder)}
@@ -101,6 +143,7 @@ function Writer() {
             {status === "saving" ? "saving…" : "Save"}
           </button>
         </div>
+
 
         <section className="paper-shadow fade-up mt-5 rounded-2xl bg-card px-5 py-7">
           <input
