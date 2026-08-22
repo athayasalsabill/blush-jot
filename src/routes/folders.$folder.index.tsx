@@ -1,10 +1,11 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { fetchEntries, fetchFolders, isUnlocked, removeEntry } from "@/lib/diary.functions";
 import { prettifySlug, themePage } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { clearDraft, listDrafts, withCache, type Draft } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/$folder/")({
   beforeLoad: async () => {
