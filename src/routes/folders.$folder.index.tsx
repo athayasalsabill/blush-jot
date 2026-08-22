@@ -125,7 +125,7 @@ function EntryList() {
               Couldn't load entries: {(error as Error).message}
             </p>
           )}
-          {data?.entries.length === 0 && (
+          {data?.entries.length === 0 && drafts.length === 0 && (
             <p className="py-6 font-serif text-sm italic text-muted-foreground">
               No entries in this folder yet.
             </p>
