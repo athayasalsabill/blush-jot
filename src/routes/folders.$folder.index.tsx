@@ -36,6 +36,11 @@ function EntryList() {
   const del = useServerFn(removeEntry);
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+
+  useEffect(() => {
+    setDrafts(listDrafts(folder));
+  }, [folder]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["entries", folder],
@@ -61,6 +66,13 @@ function EntryList() {
       setBusy(false);
     }
   }
+
+  function onDeleteDraft(draft: Draft) {
+    if (!confirm(`Discard the local draft "${draft.title || "Untitled"}"?`)) return;
+    clearDraft(folder, draft.slug);
+    setDrafts(listDrafts(folder));
+  }
+
 
   return (
     <main className={`${bg} min-h-screen px-5 pt-12 pb-28`}>
