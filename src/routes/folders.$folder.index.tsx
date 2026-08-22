@@ -1,10 +1,11 @@
 import { createFileRoute, Link, redirect } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { fetchEntries, fetchFolders, isUnlocked, removeEntry } from "@/lib/diary.functions";
 import { prettifySlug, themePage } from "@/lib/folders";
-import { withCache } from "@/lib/local-store";
+import { clearDraft, listDrafts, withCache, type Draft } from "@/lib/local-store";
+
 
 export const Route = createFileRoute("/folders/$folder/")({
   beforeLoad: async () => {
@@ -35,6 +36,11 @@ function EntryList() {
   const del = useServerFn(removeEntry);
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
+  const [drafts, setDrafts] = useState<Draft[]>([]);
+
+  useEffect(() => {
+    setDrafts(listDrafts(folder));
+  }, [folder]);
 
   const { data, isLoading, error } = useQuery({
     queryKey: ["entries", folder],
@@ -61,6 +67,13 @@ function EntryList() {
     }
   }
 
+  function onDeleteDraft(draft: Draft) {
+    if (!confirm(`Discard the local draft "${draft.title || "Untitled"}"?`)) return;
+    clearDraft(folder, draft.slug);
+    setDrafts(listDrafts(folder));
+  }
+
+
   return (
     <main className={`${bg} min-h-screen px-5 pt-12 pb-28`}>
       <div className="mx-auto w-full max-w-md">
@@ -73,6 +86,37 @@ function EntryList() {
         <h1 className="mt-4 font-serif text-3xl leading-snug break-words text-foreground">{label}</h1>
 
         <div className="mt-8 divide-y divide-border rounded-2xl bg-card/85 px-4">
+          {drafts.map((draft) => (
+            <div key={`draft-${draft.slug}`} className="fade-up flex items-start gap-3 py-6">
+              <Link
+                to="/folders/$folder/write"
+                params={{ folder }}
+                search={{ slug: draft.slug === "__new" ? "" : draft.slug }}
+                className="block flex-1 transition-opacity hover:opacity-70"
+              >
+                <span className="rounded-full border border-border px-2 py-0.5 text-[9px] tracking-widest uppercase text-muted-foreground">
+                  Local draft
+                </span>
+                <h2 className="mt-2 font-serif text-xl leading-snug text-foreground">
+                  {draft.title || "Untitled"}
+                </h2>
+                <p className="mt-1 text-[11px] tracking-widest uppercase text-muted-foreground">
+                  {draft.date}
+                </p>
+                <p className="mt-2 font-serif text-sm leading-relaxed text-muted-foreground">
+                  {draft.body.replace(/\s+/g, " ").slice(0, 160)}
+                </p>
+              </Link>
+              <button
+                onClick={() => onDeleteDraft(draft)}
+                aria-label={`Discard draft ${draft.title || "Untitled"}`}
+                className="mt-1 rounded-full border border-border px-3 py-1 text-[10px] tracking-widest uppercase text-muted-foreground transition-colors hover:border-destructive hover:text-destructive"
+              >
+                Discard
+              </button>
+            </div>
+          ))}
+
           {isLoading && (
             <p className="py-6 font-serif text-sm italic text-muted-foreground">loading entries…</p>
           )}
@@ -81,7 +125,7 @@ function EntryList() {
               Couldn't load entries: {(error as Error).message}
             </p>
           )}
-          {data?.entries.length === 0 && (
+          {data?.entries.length === 0 && drafts.length === 0 && (
             <p className="py-6 font-serif text-sm italic text-muted-foreground">
               No entries in this folder yet.
             </p>
